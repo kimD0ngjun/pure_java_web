@@ -108,23 +108,15 @@ public class IocContainerConfig {
             }
         }
 
-        // 순환참조 감지 로직
-        Set<Class<? extends AbstractBean>> circularBeans = new HashSet<>();
-        for (Map.Entry<Class<?>, Integer> entry : indegree.entrySet()) {
-            if (entry.getValue() > 0) {
-                circularBeans.add((Class<? extends AbstractBean>) entry.getKey());
-            }
-        }
+        // 위상정렬 후에도 진입차수 0 갱신이 안됐다면 순환참조
+        Set<Class<? extends AbstractBean>> remainingBeans = new HashSet<>();
+        indegree.entrySet().stream()
+                .filter(e -> e.getValue() != 0)
+                .forEach(e ->
+                        remainingBeans.add((Class<? extends AbstractBean>) e.getKey()));
 
-        if (!circularBeans.isEmpty()) {
-            log.error("순환참조 발생");
-            circularBeans.stream().forEach(e ->
-                    log.error("{} -> {}", e.getSimpleName(),
-                            dependencyGraph.get(e).stream()
-                                    .map(Class::getSimpleName)
-                                    .toList()));
-            throw new RuntimeException("빈들 간 순환참조는 불가능");
-        }
+        // 순환참조 DFS 검사
+        if (!remainingBeans.isEmpty()) detectAndLogCycles(remainingBeans);
     }
 
     /**
@@ -159,5 +151,58 @@ public class IocContainerConfig {
             }
             indegree.put(beanClass, paramCount); // 진입차수 카운팅
         }
+    }
+
+
+    /**
+     * 순환참조 DFS 검사
+     */
+    private void detectAndLogCycles(Set<Class<? extends AbstractBean>> noZeroBeans) {
+        Set<Class<?>> visited = new HashSet<>();
+        Set<Class<?>> stack = new HashSet<>();
+        List<List<Class<?>>> cycles = new ArrayList<>();
+
+        for (Class<?> beanClass : noZeroBeans) {
+            if (!visited.contains(beanClass)) {
+                detectCyclesDFS(beanClass, visited, stack, new ArrayList<>(), cycles);
+            }
+        }
+
+        if (!cycles.isEmpty()) {
+            log.error("순환참조 발생");
+            for (List<Class<?>> cycle : cycles) {
+                String path = cycle.stream()
+                        .map(Class::getSimpleName)
+                        .reduce((a, b) -> a + " -> " + b)
+                        .orElse("");
+                log.error(path);
+            }
+            throw new RuntimeException("빈들 간 순환참조는 불가능");
+        }
+    }
+
+    private void detectCyclesDFS(
+            Class<?> current,
+            Set<Class<?>> visited,
+            Set<Class<?>> stack,
+            List<Class<?>> path,
+            List<List<Class<?>>> cycles
+    ) {
+        visited.add(current);
+        stack.add(current);
+        path.add(current);
+
+        for (Class<?> neighbor : dependencyGraph.getOrDefault(current, Collections.emptySet())) {
+            if (!visited.contains(neighbor)) {
+                detectCyclesDFS(neighbor, visited, stack, new ArrayList<>(path), cycles);
+            } else if (stack.contains(neighbor)) {
+                int idx = path.indexOf(neighbor);
+                if (idx >= 0) {
+                    cycles.add(new ArrayList<>(path.subList(idx, path.size())));
+                }
+            }
+        }
+
+        stack.remove(current);
     }
 }
