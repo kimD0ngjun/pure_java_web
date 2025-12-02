@@ -1,5 +1,6 @@
 package global.ioc;
 
+import global.log.Log;
 import global.log.LogConfig;
 import org.slf4j.Logger;
 
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
  * 빈의 초기화란, 빈이 생성되고 의존성이 모두 주입된 후에 추가 로직(로깅, 캐싱 정리 등)을 수행하는 것
  * 즉, 빈 자체의 생성자를 AbstractBean에 종속시키는 것은 옳지 않음
  */
+@Log
 public abstract class AbstractBean implements Bean {
     // 완벽한 흉내는 아니지만, Log 어노테이션을 통한 약간의 모방
     protected Logger log;

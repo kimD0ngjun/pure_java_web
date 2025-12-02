@@ -7,11 +7,36 @@ public class LogConfig {
     public static void initializeLogger(Object bean) {
         Class<?> clazz = bean.getClass();
 
-        if (!clazz.isAnnotationPresent(Log.class)) return;
+        boolean hasLogAnnotation = false;
+        Class<?> searchClass = clazz;
+        while (searchClass != null) {
+            if (searchClass.isAnnotationPresent(Log.class)) {
+                hasLogAnnotation = true;
+                break;
+            }
+            searchClass = searchClass.getSuperclass();
+        }
+
+        if (!hasLogAnnotation)
+            return;
+
+        // log 필드 찾기
+        Field logField = null;
+        searchClass = clazz;
+        while (searchClass != null) {
+            try {
+                logField = searchClass.getDeclaredField("log");
+                break;
+            } catch (NoSuchFieldException e) {
+                searchClass = searchClass.getSuperclass();
+            }
+        }
+
+        if (logField == null) {
+            throw new RuntimeException("Logger 타입 필드 누락: " + clazz.getSimpleName());
+        }
 
         try {
-            // log 필드 자동 생성
-            Field logField = clazz.getDeclaredField("log");
             logField.setAccessible(true);
             logField.set(bean, LoggerFactory.getLogger(clazz));
         } catch (Exception e) {
