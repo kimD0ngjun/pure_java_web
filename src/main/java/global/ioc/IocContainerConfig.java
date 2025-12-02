@@ -101,6 +101,21 @@ public class IocContainerConfig {
                 }
             }
         }
+
+        // 순환참조 감지 로직
+        Set<Class<? extends AbstractBean>> circularBeans = new HashSet<>();
+        for (Map.Entry<Class<?>, Integer> entry : indegree.entrySet()) {
+            if (entry.getValue() > 0) {
+                circularBeans.add((Class<? extends AbstractBean>) entry.getKey());
+            }
+        }
+
+        if (!circularBeans.isEmpty()) {
+            log.error("순환참조 발생");
+            circularBeans.stream().forEach(e ->
+                            log.error("{} -> {}", e.getSimpleName(), dependencyGraph.get(e)));
+            throw new RuntimeException("빈들 간 순환참조는 불가능");
+        }
     }
 
     /**
