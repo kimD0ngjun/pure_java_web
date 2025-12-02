@@ -24,6 +24,8 @@ public abstract class AbstractBean implements Bean {
 
     @Override
     public void destroy() {
+        // 가능하다면 내부 리소스 해제 모방으로 공통 필드 null 할당 같은 것도 가능할듯
         log.info("{} 빈 종료", this.getClass().getSimpleName());
+        log = null; // 로그 null 할당(리소스 정리)
     }
 }
