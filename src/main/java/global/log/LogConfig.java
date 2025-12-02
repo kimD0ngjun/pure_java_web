@@ -7,6 +7,7 @@ public class LogConfig {
     public static void initializeLogger(Object bean) {
         Class<?> clazz = bean.getClass();
 
+        // 상위 클래스 반복 탐색
         boolean hasLogAnnotation = false;
         Class<?> searchClass = clazz;
         while (searchClass != null) {
@@ -17,10 +18,10 @@ public class LogConfig {
             searchClass = searchClass.getSuperclass();
         }
 
-        if (!hasLogAnnotation)
-            return;
+        // 어노테이션 있으면 패스
+        if (!hasLogAnnotation) return;
 
-        // log 필드 찾기
+        // 없으면 이제 log 필드 찾기, 필드 없으면 선언
         Field logField = null;
         searchClass = clazz;
         while (searchClass != null) {
@@ -32,10 +33,12 @@ public class LogConfig {
             }
         }
 
+        // 예외 처리
         if (logField == null) {
             throw new RuntimeException("Logger 타입 필드 누락: " + clazz.getSimpleName());
         }
 
+        // 빈 필드에 로깅 팩토리 할당
         try {
             logField.setAccessible(true);
             logField.set(bean, LoggerFactory.getLogger(clazz));
