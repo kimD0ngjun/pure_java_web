@@ -31,19 +31,25 @@ public class IocContainerConfig {
         log.info("[{}] : IoC 컨테이너 동작 시작", this.getClass().getSimpleName());
 
         // 1. 빈 생성 & 빈 간 의존성 관리(IoC 띄운 다음에 수행하므로 리플랙션 기반)
+        setDependencyGraph();
         initAutowiredConstructorBeans(); // 위상정렬 기반 빈 생성 및 의존성 주입
 
         // 2. 빈 초기화(AbstractBean의 init 메소드 호출)
         for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
             entry.getValue().init();
         }
+    }
 
-        // 3. 서버 종료시, 빈 destroy
+    /**
+     * IoC 컨테이너 종료 메소드
+     */
+    public void shutdown() {
+        // 1. 빈 destroy
         for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
             entry.getValue().destroy();
         }
 
-        // 4. 서버 종료시, 빈 관련 필드들 전부 정리
+        // 2. 빈 관련 필드들 전부 정리
         beanClasses = null;
         singletonBeans = null;
         dependencyGraph = null;
@@ -113,7 +119,10 @@ public class IocContainerConfig {
         if (!circularBeans.isEmpty()) {
             log.error("순환참조 발생");
             circularBeans.stream().forEach(e ->
-                            log.error("{} -> {}", e.getSimpleName(), dependencyGraph.get(e)));
+                    log.error("{} -> {}", e.getSimpleName(),
+                            dependencyGraph.get(e).stream()
+                                    .map(Class::getSimpleName)
+                                    .toList()));
             throw new RuntimeException("빈들 간 순환참조는 불가능");
         }
     }
