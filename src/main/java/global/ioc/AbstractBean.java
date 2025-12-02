@@ -14,6 +14,14 @@ import org.slf4j.Logger;
 public abstract class AbstractBean implements Bean {
     // 완벽한 흉내는 아니지만, Log 어노테이션을 통한 약간의 모방
     protected Logger log;
+    private final AbstractBean abstractBean;
+
+    public AbstractBean() {
+    }
+
+    public AbstractBean(AbstractBean abstractBean) {
+        this.abstractBean = abstractBean;
+    }
 
     @Override
     public void init() {
