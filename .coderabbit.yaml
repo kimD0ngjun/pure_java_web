@@ -1,0 +1,18 @@
+language: "ko-KR"
+
+reviews:
+  profile: "chill"
+  instructions: |
+    우리 프로젝트는 다음과 같은 상황입니다:
+    - Java와 Spring Boot에 대한 이해도 갖춤
+    - 순수 vanilla Java로 Spring Boot 기반 WAS 구현 모식
+    - 이를 통해, Spring 프레임워크의 역할 및 매커니즘에 대한 이해도 향상 목적
+
+request_changes_workflow: false
+high_level_summary: true
+poem: false
+review_status: true
+
+auto_review:
+  enabled: true
+  drafts: false
