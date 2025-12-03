@@ -21,6 +21,8 @@ dependencies {
     // 리플렉션은 조금 더 쉽게...
     implementation 'org.reflections:reflections:0.10.2'
 
+    // yml 파일 리더
+    implementation 'org.yaml:snakeyaml:2.5'
 }
 
 test {
