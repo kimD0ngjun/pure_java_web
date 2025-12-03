@@ -4,15 +4,18 @@ import global.ioc.IocContainer;
 import global.ioc.IocContainerConfig;
 import global.log.Log;
 import global.log.LogConfig;
+import global.reader.YmlConfigReader;
 import org.slf4j.Logger;
 
 @Log
 public class ApplicationContext {
     private Logger log;
     private final IocContainer ioc;
+    private final YmlConfigReader reader;
 
-    public ApplicationContext(IocContainer ioc) {
+    public ApplicationContext(IocContainer ioc, YmlConfigReader reader) {
         this.ioc = ioc;
+        this.reader = reader;
     }
 
     /**
@@ -20,7 +23,8 @@ public class ApplicationContext {
      */
     public static ApplicationContext run() {
         ApplicationContext context = new ApplicationContext(
-                new IocContainer(new IocContainerConfig())
+                new IocContainer(new IocContainerConfig()),
+                new YmlConfigReader("application.yml")
         );
         context.runContext(); // 컨텍스트 실행
         return context;
@@ -37,6 +41,13 @@ public class ApplicationContext {
 
         // ioc 부팅 & 셧다운 훅 등록
         ioc.run();
+
+        log.info("서버 포트번호: {}", reader.getConfig().getServer().getPort());
+        log.info("서버 호스트: {}", reader.getConfig().getServer().getHost());
+        log.info("로깅 레벨: {}", reader.getConfig().getLogging().getLevel());
+        log.info("데이터베이스 url: {}", reader.getConfig().getDatabase().getUrl());
+        log.info("데이터베이스 username: {}", reader.getConfig().getDatabase().getUsername());
+        log.info("데이터베이스 password: {}", reader.getConfig().getDatabase().getPassword());
 
         // ioc 부팅 후에 설정정보 리딩
         // 설정정보 리딩 후에 톰캣 서버 부팅

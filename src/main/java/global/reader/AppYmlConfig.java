@@ -1,9 +1,11 @@
 package global.reader;
 
+// 자바는 정적 언어이므로 중첩 클래스 기반으로 SnakeYML 생성자에 넣어주면 편함
+// 그냥 Map으로 처리하면 너무 복잡...
 public class AppYmlConfig {
     private ServerConfig server;
-    private LogOptionConfig log;
-    private DatabaseInfoConfig db;
+    private LogOptionConfig logging;
+    private DatabaseInfoConfig database;
 
     public ServerConfig getServer() {
         return server;
@@ -13,20 +15,20 @@ public class AppYmlConfig {
         this.server = server;
     }
 
-    public LogOptionConfig getLog() {
-        return log;
+    public LogOptionConfig getLogging() {
+        return logging;
     }
 
-    public void setLog(LogOptionConfig log) {
-        this.log = log;
+    public void setLogging(LogOptionConfig logging) {
+        this.logging = logging;
     }
 
-    public DatabaseInfoConfig getDb() {
-        return db;
+    public DatabaseInfoConfig getDatabase() {
+        return database;
     }
 
-    public void setDb(DatabaseInfoConfig db) {
-        this.db = db;
+    public void setDatabase(DatabaseInfoConfig database) {
+        this.database = database;
     }
 
     public static class ServerConfig {
