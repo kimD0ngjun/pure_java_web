@@ -1,24 +1,13 @@
+import global.context.ApplicationContext;
+import global.ioc.IocContainer;
 import global.ioc.IocContainerConfig;
-import global.log.Log;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-@Log
 public class PureJavaWebApplication {
-
-    private static Logger log = LoggerFactory.getLogger(PureJavaWebApplication.class);
-
+    /**
+     * 스프링 컨텍스트는 IoC 컨테이너의 생명주기, 설정정보 리딩 등을 담당한다. 그 후에 톰캣 내장 서버가 돌아간다
+     * @param args
+     */
     public static void main(String[] args) {
-        log.info("""
-                
-                =====================================
-                PURE JAVA WEB APPLICATION RUNNING...!
-                =====================================
-                """);
-
-        // 1. IoC 컨테이너 초기화
-        IocContainerConfig ioc = new IocContainerConfig();
-        ioc.run();
 
 //        // 2. 웹 서버 쓰레드 시작(아마 이런 식으로 구현하게 될듯?)
 //        // 실제로 컨테이너 초기화 & 빈 등록 끝나면 톰캣 같은 웹 서버 시작
@@ -32,18 +21,17 @@ public class PureJavaWebApplication {
 //
 //        webServerThread.start();
 
-        // 3. JVM 종료 시 IoC 컨테이너 종료 등록
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("IoC container 종료 중...");
-            ioc.shutdown();
-            log.info("Shutdown complete. GOOD BYE!");
-        }));
+        ApplicationContext context = new ApplicationContext(
+                new IocContainer(new IocContainerConfig())
+        );
+
+        context.run();
 
         // 현재는 스레드 강제 점유로 동작하는 것처럼 보이게 하기
         try {
             Thread.currentThread().join();
         } catch (InterruptedException e) {
-            log.error("Main thread interrupted", e);
+            System.err.println(e.getMessage());
             Thread.currentThread().interrupt();
         }
     }
