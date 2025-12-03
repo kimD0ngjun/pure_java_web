@@ -1,8 +1,8 @@
 package domain;
 
-import global.ioc.AbstractBean;
+import global.ioc.Bean;
 
-public class B extends AbstractBean {
+public class B implements Bean {
     private final A a;
 
     public B(A a) {
