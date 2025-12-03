@@ -1,7 +1,6 @@
 package global.ioc;
 
 import global.log.Log;
-import global.log.LogConfig;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -13,9 +12,7 @@ import org.slf4j.Logger;
 public class IocContainerConfig {
 
     private Logger log;
-    private Set<Class<? extends AbstractBean>> beanClasses =
-            new Reflections(new ConfigurationBuilder().forPackages("global", "domain"))
-                    .getSubTypesOf(AbstractBean.class); // 패키지 스캔 후, 추상 빈 상속구현체 전부 갖고오기
+    private Set<Class<? extends AbstractBean>> beanClasses;
     private Map<Class<?>, AbstractBean> singletonBeans = new HashMap<>(); // 싱글톤 빈 캐시
 
     // 의존성 주입 위상 정렬을 위한 그래프 필드 + 진입차수
@@ -23,37 +20,11 @@ public class IocContainerConfig {
     private Map<Class<?>, Integer> indegree = new HashMap<>();
 
     /**
-     * IoC 컨테이너 동작 메소드
+     * 빈 스캔 시작
      */
-    public void run() {
-        // 0. IoC 로깅용 Logger 주입, 흐름상 IoC 먼저 띄우고 로그 설정 init
-        LogConfig.initializeLogger(this);
-        log.info("[{}] : IoC 컨테이너 동작 시작", this.getClass().getSimpleName());
-
-        // 1. 빈 생성 & 빈 간 의존성 관리(IoC 띄운 다음에 수행하므로 리플랙션 기반)
-        setDependencyGraph();
-        initAutowiredConstructorBeans(); // 위상정렬 기반 빈 생성 및 의존성 주입
-
-        // 2. 빈 초기화(AbstractBean의 init 메소드 호출)
-        for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
-            entry.getValue().init();
-        }
-    }
-
-    /**
-     * IoC 컨테이너 종료 메소드
-     */
-    public void shutdown() {
-        // 1. 빈 destroy
-        for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
-            entry.getValue().destroy();
-        }
-
-        // 2. 빈 관련 필드들 전부 정리
-        beanClasses = null;
-        singletonBeans = null;
-        dependencyGraph = null;
-        indegree = null;
+    public void scanBeans() {
+        beanClasses = new Reflections(new ConfigurationBuilder().forPackages("global", "domain"))
+                .getSubTypesOf(AbstractBean.class); // 패키지 스캔 후, 추상 빈 상속구현체 전부 갖고오기
     }
 
     /**
@@ -64,7 +35,7 @@ public class IocContainerConfig {
      * <p>4. 의존성 주입이 여러 개라면? -> 일단 가장 파라미터 많은 생성자로만 하자...</p>
      * <p>5. 객체 회수할 때는 어떻게 할까? -> 싱글톤 캐시를 비워버리고 GC는 자동으로 객체 할당 해제</p>
      */
-    private void initAutowiredConstructorBeans() {
+    public void constructAutowiredBeans() {
         // 진입차수 0인 애들(기본 생성자 빈)부터 큐 산입
         Queue<Class<? extends AbstractBean>> queue = new LinkedList<>();
         for (Map.Entry<Class<?>, Integer> entry : indegree.entrySet()) {
@@ -122,7 +93,7 @@ public class IocContainerConfig {
     /**
      * 의존성 그래프 생성
      */
-    private void setDependencyGraph() {
+    public void setDependencyGraph() {
         // 먼저 모든 빈을 dependencyGraph에 등록
         for (Class<? extends AbstractBean> beanClass : beanClasses) {
             dependencyGraph.putIfAbsent(beanClass, new HashSet<>());
@@ -204,5 +175,37 @@ public class IocContainerConfig {
         }
 
         stack.remove(current);
+    }
+
+    /**
+     * 빈 초기화
+     */
+    public void initBeans() {
+        for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
+            entry.getValue().init();
+        }
+    }
+
+    /**
+     * 빈 조회
+     */
+    public <T> T getBean(Class<T> type) {
+        return (T) singletonBeans.get(type);
+    }
+
+    /**
+     * IoC 컨테이너 빈 정리
+     */
+    public void destroyBeans() {
+        // 빈 destroy
+        for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
+            entry.getValue().destroy();
+        }
+
+        // 빈 관련 필드들 전부 정리
+        beanClasses = null;
+        singletonBeans = null;
+        dependencyGraph = null;
+        indegree = null;
     }
 }

@@ -21,6 +21,8 @@ public abstract class AbstractBean implements Bean {
     public void init() {
         // IocContainerConfig가 LogConfig 주입하지 않아도 자동 처리
         if (log == null) LogConfig.initializeLogger(this);
+        // 현재는 빈 초기화 단계에서 직접 로그 설정이 이니싱 -> AOP로 리팩토링해야되지 않나요
+
         log.info("[{}] 빈 초기화", this.getClass().getSimpleName());
     }
 
