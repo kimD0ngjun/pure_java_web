@@ -7,7 +7,6 @@ import global.reader.YmlConfigReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Log
 public class ApplicationContext {
     private Logger log = LoggerFactory.getLogger(ApplicationContext.class);
     private final IocContainer ioc;
@@ -71,5 +70,9 @@ public class ApplicationContext {
             ioc.shutdown();
             log.info("Shutdown complete. GOOD BYE!");
         }));
+    }
+
+    public <T> T getBean(Class<T> type) {
+        return ioc.getBean(type);
     }
 }

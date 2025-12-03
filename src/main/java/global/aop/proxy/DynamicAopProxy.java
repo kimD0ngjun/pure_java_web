@@ -6,7 +6,7 @@ import global.aop.transaction.Transactional;
 import java.lang.reflect.Proxy;
 import org.slf4j.Logger;
 
-public class AopProxy {
+public class DynamicAopProxy {
 
     public static <T> T createProxy(T target, Class<T> type) {
         // 다이나믹 프록시 생성 -> AOP 적용

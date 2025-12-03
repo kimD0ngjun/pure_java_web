@@ -1,5 +1,6 @@
 package domain;
 
+import global.aop.log.Log;
 import global.ioc.Bean;
 
 public class A implements Bean {
@@ -7,5 +8,10 @@ public class A implements Bean {
 
     public A(B b) {
         this.b = b;
+    }
+
+    @Log
+    public void test() {
+        System.out.println("테스트해봤슴");
     }
 }

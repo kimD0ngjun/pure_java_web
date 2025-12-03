@@ -23,6 +23,10 @@ dependencies {
 
     // yml 파일 리더
     implementation 'org.yaml:snakeyaml:2.5'
+
+    // 다이나믹 프록시는 인터페이스 기반만 메소드 호출 가능
+    // 그래서 클래스 기반 상속 프록시 구현하는 CGLIB 라이브러리 추가
+    implementation 'cglib:cglib:3.3.0'
 }
 
 test {
