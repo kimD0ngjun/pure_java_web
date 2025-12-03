@@ -1,5 +1,6 @@
 package global.ioc;
 
+import global.aop.proxy.AopProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +25,6 @@ public class IocContainer {
         // 빈 생성 & 빈 간 의존성 관리(IoC 띄운 다음에 수행하므로 리플랙션 기반)
         config.setDependencyGraph();
         config.constructAutowiredBeans(); // 위상정렬 기반 빈 생성 및 의존성 주입
-
-        // 빈 생성과 의존성 주입이 이뤄진 후 초기화 전에 AOP가 적용된다
-        // 즉 빈들의 로깅 정책과 트랜잭션 정책 적용을 프록시 패턴 활용해서 여기서 적용해야할듯
 
         // 빈 초기화
         config.initBeans();
