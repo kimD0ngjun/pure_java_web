@@ -1,0 +1,11 @@
+server:
+  host: localhost
+  port: 8080
+
+logging:
+  level: INFO
+
+database:
+  url: test
+  username: sa
+  password:
