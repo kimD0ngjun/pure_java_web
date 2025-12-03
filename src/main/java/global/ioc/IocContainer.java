@@ -1,13 +1,12 @@
 package global.ioc;
 
-import global.log.Log;
 import global.log.LogConfig;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Log
 public class IocContainer {
 
-    private Logger log;
+    private Logger log = LoggerFactory.getLogger(IocContainer.class);
     private final IocContainerConfig config;
 
     public IocContainer(IocContainerConfig config) {

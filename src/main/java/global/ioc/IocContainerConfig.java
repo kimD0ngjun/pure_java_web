@@ -7,13 +7,13 @@ import java.util.*;
 import org.reflections.Reflections;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Log
 public class IocContainerConfig {
 
-    private Logger log;
-    private Set<Class<? extends AbstractBean>> beanClasses;
-    private Map<Class<?>, AbstractBean> singletonBeans = new HashMap<>(); // 싱글톤 빈 캐시
+    private Logger log = LoggerFactory.getLogger(IocContainerConfig.class);
+    private Set<Class<? extends Bean>> beanClasses;
+    private Map<Class<?>, Bean> singletonBeans = new HashMap<>(); // 싱글톤 빈 캐시
 
     // 의존성 주입 위상 정렬을 위한 그래프 필드 + 진입차수
     private Map<Class<?>, Set<Class<?>>> dependencyGraph = new HashMap<>();
@@ -24,7 +24,7 @@ public class IocContainerConfig {
      */
     public void scanBeans() {
         beanClasses = new Reflections(new ConfigurationBuilder().forPackages("global", "domain"))
-                .getSubTypesOf(AbstractBean.class); // 패키지 스캔 후, 추상 빈 상속구현체 전부 갖고오기
+                .getSubTypesOf(Bean.class); // 패키지 스캔 후, 추상 빈 상속구현체 전부 갖고오기
     }
 
     /**
@@ -37,16 +37,16 @@ public class IocContainerConfig {
      */
     public void constructAutowiredBeans() {
         // 진입차수 0인 애들(기본 생성자 빈)부터 큐 산입
-        Queue<Class<? extends AbstractBean>> queue = new LinkedList<>();
+        Queue<Class<? extends Bean>> queue = new LinkedList<>();
         for (Map.Entry<Class<?>, Integer> entry : indegree.entrySet()) {
             if (entry.getValue() == 0) {
-                queue.add((Class<? extends AbstractBean>) entry.getKey());
+                queue.add((Class<? extends Bean>) entry.getKey());
             }
         }
 
         // 위상정렬 시작
         while(!queue.isEmpty()) {
-            Class<? extends AbstractBean> beanClass = queue.poll();
+            Class<? extends Bean> beanClass = queue.poll();
 
             try {
                 // 생성자 선택 (파라미터가 가장 많은 생성자)
@@ -61,7 +61,7 @@ public class IocContainerConfig {
                         .toArray();
 
                 constructor.setAccessible(true);
-                AbstractBean bean = (AbstractBean) constructor.newInstance(params);
+                Bean bean = (Bean) constructor.newInstance(params);
 
                 // 싱글톤 캐싱
                 singletonBeans.put(beanClass, bean);
@@ -74,17 +74,17 @@ public class IocContainerConfig {
             for (Class<?> adj : dependencyGraph.get(beanClass)) {
                 indegree.put(adj, indegree.get(adj) - 1);
                 if (indegree.get(adj) == 0) { // 진입차수 0이면 큐 산입
-                    queue.add((Class<? extends AbstractBean>) adj);
+                    queue.add((Class<? extends Bean>) adj);
                 }
             }
         }
 
         // 위상정렬 후에도 진입차수 0 갱신이 안됐다면 순환참조
-        Set<Class<? extends AbstractBean>> remainingBeans = new HashSet<>();
+        Set<Class<? extends Bean>> remainingBeans = new HashSet<>();
         indegree.entrySet().stream()
                 .filter(e -> e.getValue() != 0)
                 .forEach(e ->
-                        remainingBeans.add((Class<? extends AbstractBean>) e.getKey()));
+                        remainingBeans.add((Class<? extends Bean>) e.getKey()));
 
         // 순환참조 DFS 검사
         if (!remainingBeans.isEmpty()) detectAndLogCycles(remainingBeans);
@@ -95,11 +95,11 @@ public class IocContainerConfig {
      */
     public void setDependencyGraph() {
         // 먼저 모든 빈을 dependencyGraph에 등록
-        for (Class<? extends AbstractBean> beanClass : beanClasses) {
+        for (Class<? extends Bean> beanClass : beanClasses) {
             dependencyGraph.putIfAbsent(beanClass, new HashSet<>());
         }
 
-        for (Class<? extends AbstractBean> beanClass : beanClasses) {
+        for (Class<? extends Bean> beanClass : beanClasses) {
             // 기본 생성자는 제외
             if (beanClass.getDeclaredConstructors().length == 1
                     && beanClass.getDeclaredConstructors()[0].getParameterCount() == 0) {
@@ -116,7 +116,7 @@ public class IocContainerConfig {
 
             int paramCount = 0;
             for (Class<?> parameter : constructor.getParameterTypes()) {
-                if (!AbstractBean.class.isAssignableFrom(parameter)) continue; // 추상 빈 타입만
+                if (!Bean.class.isAssignableFrom(parameter)) continue; // 추상 빈 타입만
                 dependencyGraph.get(parameter).add(beanClass); // 의존성 타입 -> 빈 유향간선 추가
                 paramCount++;
             }
@@ -128,7 +128,7 @@ public class IocContainerConfig {
     /**
      * 순환참조 DFS 검사
      */
-    private void detectAndLogCycles(Set<Class<? extends AbstractBean>> noZeroBeans) {
+    private void detectAndLogCycles(Set<Class<? extends Bean>> noZeroBeans) {
         Set<Class<?>> visited = new HashSet<>();
         Set<Class<?>> stack = new HashSet<>();
         List<List<Class<?>>> cycles = new ArrayList<>();
@@ -140,13 +140,12 @@ public class IocContainerConfig {
         }
 
         if (!cycles.isEmpty()) {
-            log.error("순환참조 발생");
             for (List<Class<?>> cycle : cycles) {
                 String path = cycle.stream()
                         .map(Class::getSimpleName)
                         .reduce((a, b) -> a + " -> " + b)
                         .orElse("");
-                log.error(path);
+                log.error("순환참조 발생: {}", path);
             }
             throw new RuntimeException("빈들 간 순환참조는 불가능");
         }
@@ -181,7 +180,7 @@ public class IocContainerConfig {
      * 빈 초기화
      */
     public void initBeans() {
-        for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
+        for (Map.Entry<Class<?>, Bean> entry: singletonBeans.entrySet()) {
             entry.getValue().init();
         }
     }
@@ -198,7 +197,7 @@ public class IocContainerConfig {
      */
     public void destroyBeans() {
         // 빈 destroy
-        for (Map.Entry<Class<?>, AbstractBean> entry: singletonBeans.entrySet()) {
+        for (Map.Entry<Class<?>, Bean> entry: singletonBeans.entrySet()) {
             entry.getValue().destroy();
         }
 
