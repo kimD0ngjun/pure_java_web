@@ -1,6 +1,7 @@
 package global.context;
 
 import global.ioc.IocContainer;
+import global.ioc.IocContainerConfig;
 import global.log.Log;
 import global.log.LogConfig;
 import org.slf4j.Logger;
@@ -14,10 +15,21 @@ public class ApplicationContext {
         this.ioc = ioc;
     }
 
-    public void run() {
+    /**
+     * 편의성 static run 메소드
+     */
+    public static ApplicationContext run() {
+        ApplicationContext context = new ApplicationContext(
+                new IocContainer(new IocContainerConfig())
+        );
+        context.runContext(); // 컨텍스트 실행
+        return context;
+    }
+
+    public void runContext() {
         LogConfig.initializeLogger(this);
         log.info("""
-                
+                \n
                 =====================================
                 PURE JAVA WEB APPLICATION RUNNING...!
                 =====================================
@@ -25,12 +37,27 @@ public class ApplicationContext {
 
         // ioc 부팅 & 셧다운 훅 등록
         ioc.run();
+
+        // ioc 부팅 후에 설정정보 리딩
+        // 설정정보 리딩 후에 톰캣 서버 부팅
+//        // 2. 웹 서버 쓰레드 시작(아마 이런 식으로 구현하게 될듯?)
+//        // 실제로 컨테이너 초기화 & 빈 등록 끝나면 톰캣 같은 웹 서버 시작
+//        // 내장 톰캣 인스턴스 생성 후 커넥터 시작해서 HTTP 포트 바인딩 처리
+//        // 톰캣 내부에서 요청 처리하는 스레드 풀 가동
+//        // (메인 스레드 블록 안 시키고 리스닝 스레드와 요청처리 스레드가 비동기로 동작함)
+//        Thread webServerThread = new Thread(() -> {
+//            SimpleHttpServer server = new TomcatHttpServer(8080); // 포트 바인딩
+//            server.start(); // 요청 처리 루프
+//        }, "WebServerThread");
+//
+//        webServerThread.start();
+
         registerShutdownHook();
     }
 
     private void registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("IoC container 종료 중...");
+            log.info("Application 종료 중...");
             ioc.shutdown();
             log.info("Shutdown complete. GOOD BYE!");
         }));
