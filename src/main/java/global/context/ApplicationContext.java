@@ -6,10 +6,11 @@ import global.log.Log;
 import global.log.LogConfig;
 import global.reader.YmlConfigReader;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Log
 public class ApplicationContext {
-    private Logger log;
+    private Logger log = LoggerFactory.getLogger(ApplicationContext.class);
     private final IocContainer ioc;
     private final YmlConfigReader reader;
 
@@ -31,7 +32,6 @@ public class ApplicationContext {
     }
 
     public void runContext() {
-        LogConfig.initializeLogger(this);
         log.info("""
                 \n
                 =====================================

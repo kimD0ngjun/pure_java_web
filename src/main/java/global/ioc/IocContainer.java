@@ -17,8 +17,6 @@ public class IocContainer {
      * IoC 컨테이너 동작 메소드
      */
     public void run() {
-        // IoC 로깅용 Logger 주입, 흐름상 IoC 먼저 띄우고 로그 설정 init
-        LogConfig.initializeLogger(this);
         log.info("[{}] : IoC 컨테이너 동작 시작", this.getClass().getSimpleName());
 
         // 빈 스캔
