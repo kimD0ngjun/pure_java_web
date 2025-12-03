@@ -1,6 +1,7 @@
 package global.log;
 
 import java.lang.reflect.Field;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LogConfig {
@@ -44,6 +45,17 @@ public class LogConfig {
             logField.set(bean, LoggerFactory.getLogger(clazz));
         } catch (Exception e) {
             throw new RuntimeException("Logger 주입 실패 : " + clazz.getSimpleName(), e);
+        }
+    }
+
+    // 헬퍼 메서드
+    public static Logger getLogger(Object bean) {
+        try {
+            Field logField = bean.getClass().getDeclaredField("log");
+            logField.setAccessible(true);
+            return (Logger) logField.get(bean);
+        } catch (Exception e) {
+            throw new RuntimeException("Logger 획득 실패: " + bean.getClass().getSimpleName(), e);
         }
     }
 }
