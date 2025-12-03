@@ -51,9 +51,11 @@ public class LogConfig {
     // 헬퍼 메서드
     public static Logger getLogger(Object bean) {
         try {
-            Field logField = bean.getClass().getDeclaredField("log");
-            logField.setAccessible(true);
-            return (Logger) logField.get(bean);
+            Class<?> beanClass = bean.getClass();
+            if (beanClass.getName().contains("ByteBuddy")) {
+                beanClass = beanClass.getSuperclass(); // 원본 클래스로 갖고오기
+            }
+            return LoggerFactory.getLogger(beanClass);
         } catch (Exception e) {
             throw new RuntimeException("Logger 획득 실패: " + bean.getClass().getSimpleName(), e);
         }
