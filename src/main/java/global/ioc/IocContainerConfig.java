@@ -1,6 +1,5 @@
 package global.ioc;
 
-import global.log.Log;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;

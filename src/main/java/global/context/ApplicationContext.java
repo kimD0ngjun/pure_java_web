@@ -2,8 +2,7 @@ package global.context;
 
 import global.ioc.IocContainer;
 import global.ioc.IocContainerConfig;
-import global.log.Log;
-import global.log.LogConfig;
+import global.aop.log.Log;
 import global.reader.YmlConfigReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

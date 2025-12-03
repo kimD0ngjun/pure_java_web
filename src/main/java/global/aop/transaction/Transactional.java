@@ -1,4 +1,4 @@
-package global.transaction;
+package global.aop.transaction;
 
 public @interface Transactional {
 }

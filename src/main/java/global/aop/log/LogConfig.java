@@ -1,4 +1,4 @@
-package global.log;
+package global.aop.log;
 
 import java.lang.reflect.Field;
 import org.slf4j.Logger;

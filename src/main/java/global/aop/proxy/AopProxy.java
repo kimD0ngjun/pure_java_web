@@ -1,8 +1,8 @@
-package global.aop;
+package global.aop.proxy;
 
-import global.log.Log;
-import global.log.LogConfig;
-import global.transaction.Transactional;
+import global.aop.log.Log;
+import global.aop.log.LogConfig;
+import global.aop.transaction.Transactional;
 import java.lang.reflect.Proxy;
 import org.slf4j.Logger;
 
@@ -14,9 +14,9 @@ public class AopProxy {
                 type.getClassLoader(),
                 new Class<?>[]{type},
                 (proxy, method, args) -> {
-                    // 메소드 호출 전 로깅
+                    // @Log 어노테이션이 있으면 메소드 호출 전 로깅
                     long time = 0;
-                    if (target.getClass().isAnnotationPresent(Log.class)) {
+                    if (method.isAnnotationPresent(Log.class)) {
                         time = System.currentTimeMillis();
                         Logger log = LogConfig.getLogger(target);
                         log.info("[{}] {} 메서드 호출", target.getClass().getSimpleName(), method.getName());
@@ -24,14 +24,14 @@ public class AopProxy {
 
                     Object result = null;
 
-                    // 어노테이션이 있으면 트랜잭션 시작
+                    // @Transactional 어노테이션이 있으면 트랜잭션 시작
                     if (method.isAnnotationPresent(Transactional.class)) {
                         // 트랜잭션 관련 로직을 여기다 작성하자
                     }
 
                     result = method.invoke(target, args);
 
-                    if (target.getClass().isAnnotationPresent(Log.class)) {
+                    if (method.isAnnotationPresent(Log.class)) {
                         time = System.currentTimeMillis() - time;
                         Logger log = LogConfig.getLogger(target);
                         log.info("[{}] {} 메서드 호출 종료, 소요시간: {} ms",
