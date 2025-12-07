@@ -3,7 +3,6 @@ package global.aop.proxy;
 import global.aop.log.Log;
 import global.aop.log.LogConfig;
 import global.aop.transaction.Transactional;
-import global.ioc.Bean;
 import java.lang.reflect.Method;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -28,14 +27,12 @@ public class CglibAopProxy implements MethodInterceptor {
             log.info("[{}] {} 메서드 호출", target.getClass().getSimpleName(), method.getName());
         }
 
-        Object result;
+        Object result = methodProxy.invokeSuper(o, objects);
 
         // @Transactional 어노테이션이 있으면 트랜잭션 시작
         if (method.isAnnotationPresent(Transactional.class)) {
             // 트랜잭션 관련 로직을 여기다 작성하자
         }
-
-        result = method.invoke(target, objects);
 
         if (method.isAnnotationPresent(Log.class)) {
             time = System.currentTimeMillis() - time;
@@ -49,9 +46,9 @@ public class CglibAopProxy implements MethodInterceptor {
         return result;
     }
 
-    public static <T> T createProxy(T target, Class<? extends Bean> clazz) {
+    public static <T> T createProxy(T target) {
         Enhancer enhancer = new Enhancer();
-        enhancer.setSuperclass(clazz);
+        enhancer.setSuperclass(target.getClass());
         enhancer.setCallback(new CglibAopProxy(target));
         return (T) enhancer.create();
     }

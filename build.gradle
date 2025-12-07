@@ -31,6 +31,7 @@ dependencies {
     // 근데 cglib는 또 jdk 버전 올라가면서 모듈 접근성 제한이 강화돼서 안됨....
     // 특히 17 이상부터 안됨.. 그래서 얘 쓰자.. 스프링은 복합적으로 쓰면서 내부적으로 라이브러리 대응까지 한다네..
     implementation 'net.bytebuddy:byte-buddy:1.18.2'
+    implementation 'org.objenesis:objenesis:3.4' // 생성자를 호출하지 않고 객체를 만드는(JVM 규칙 무시 라이브러리)
 }
 
 test {

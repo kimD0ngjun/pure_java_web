@@ -8,11 +8,11 @@ import org.slf4j.Logger;
 
 public class DynamicAopProxy {
 
-    public static <T> T createProxy(T target, Class<T> type) {
+    public static <T> T createProxy(T target, Class<?> ...interfaces) {
         // 다이나믹 프록시 생성 -> AOP 적용
         return (T) Proxy.newProxyInstance(
-                type.getClassLoader(),
-                new Class<?>[]{type},
+                target.getClass().getClassLoader(),
+                interfaces,
                 (proxy, method, args) -> {
                     // @Log 어노테이션이 있으면 메소드 호출 전 로깅
                     long time = 0;

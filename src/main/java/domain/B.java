@@ -1,4 +1,6 @@
 package domain;
 
-public class B implements BBean {
+import global.ioc.Bean;
+
+public class B implements Bean {
 }

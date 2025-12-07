@@ -13,6 +13,7 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.objenesis.ObjenesisStd;
 import org.slf4j.Logger;
 
 public class ByteBuddyAopProxy {
@@ -26,8 +27,10 @@ public class ByteBuddyAopProxy {
      */
     public static <T> T createProxy(T target, Class<? extends T> beanClass) {
         try {
-            ReceiverTypeDefinition<Object> intercept = new ByteBuddy()
-                    .subclass(Object.class)
+            ObjenesisStd objenesis = new ObjenesisStd();
+
+            ReceiverTypeDefinition<? extends T> intercept = new ByteBuddy()
+                    .subclass(beanClass)
                     .implement(beanClass.getInterfaces()) // Bean 인터페이스
                     .defineField("target", beanClass, Visibility.PRIVATE)
                     .method(ElementMatchers.any()) // AOP 적용할 메소드
@@ -37,7 +40,7 @@ public class ByteBuddyAopProxy {
                     .load(beanClass.getClassLoader(), Default.INJECTION)
                     .getLoaded();
 
-            return (T) proxyClass.getConstructor().newInstance();
+            return (T) objenesis.newInstance(proxyClass);
 
         } catch (Exception e) {
             throw new RuntimeException("프록시 생성 실패: " + beanClass.getName(), e);

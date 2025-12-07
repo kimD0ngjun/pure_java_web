@@ -25,6 +25,9 @@ public class IocContainer {
         config.setDependencyGraph();
         config.constructAutowiredBeans(); // 위상정렬 기반 빈 생성 및 의존성 주입
 
+        // 프록시 세팅
+        config.applyAopProxies();
+
         // 빈 초기화
         config.initBeans();
     }

@@ -1,8 +1,10 @@
 package global.ioc;
 
+import global.aop.log.Log;
 import global.aop.proxy.ByteBuddyAopProxy;
 import global.aop.proxy.CglibAopProxy;
 import global.aop.proxy.DynamicAopProxy;
+import global.aop.transaction.Transactional;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -181,6 +183,40 @@ public class IocContainerConfig {
         }
 
         stack.remove(current);
+    }
+
+    public void applyAopProxies() {
+        Map<Class<?>, Bean> proxiedMap = new HashMap<>();
+
+        for (Map.Entry<Class<?>, Bean> entry : singletonBeans.entrySet()) {
+            Class<?> beanClass = entry.getKey();
+            Bean originalBean = entry.getValue();
+
+            // 인터페이스가 없으면 JDK Dynamic Proxy 자체가 불가능
+            Class<?>[] interfaces = beanClass.getInterfaces();
+            if (interfaces.length == 0) {
+                proxiedMap.put(beanClass, originalBean);
+                continue;
+            }
+
+            // Dynamic Proxy 적용 여부 검사
+            // (메소드에 @Log, @Transactional 등 있는지 체크하자)
+            boolean needsProxy = Arrays.stream(beanClass.getMethods())
+                    .anyMatch(m -> m.isAnnotationPresent(Log.class)
+                            || m.isAnnotationPresent(Transactional.class));
+
+            if (!needsProxy) {
+                proxiedMap.put(beanClass, originalBean);
+                continue;
+            }
+
+            // 프록시 생성
+            Bean proxy = ByteBuddyAopProxy.createProxy(originalBean, originalBean.getClass());
+            proxiedMap.put(beanClass, proxy);
+        }
+
+        // 기존 bean 캐시를 프록시 버전으로 교체
+        singletonBeans = proxiedMap;
     }
 
     /**
