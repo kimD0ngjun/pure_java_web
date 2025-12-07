@@ -1,9 +1,8 @@
 package domain;
 
 import global.aop.log.Log;
-import global.ioc.Bean;
 
-public class A implements Bean {
+public class A implements ABean {
     private final B b;
 
     public A(B b) {
@@ -11,6 +10,7 @@ public class A implements Bean {
     }
 
     @Log
+    @Override
     public void test() {
         System.out.println("테스트해봤슴");
     }
