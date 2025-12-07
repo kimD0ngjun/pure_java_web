@@ -6,13 +6,13 @@ import domain.A;
 import domain.B;
 import global.context.ApplicationContext;
 import global.ioc.Bean;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 
 public class Test {
-    private ApplicationContext context;
+    private static ApplicationContext context;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUp() {
         context = ApplicationContext.run(); // 컨텍스트 초기화
     }
 

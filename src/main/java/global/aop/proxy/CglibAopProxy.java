@@ -3,6 +3,7 @@ package global.aop.proxy;
 import global.aop.log.Log;
 import global.aop.log.LogConfig;
 import global.aop.transaction.Transactional;
+import global.ioc.Bean;
 import java.lang.reflect.Method;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -48,7 +49,7 @@ public class CglibAopProxy implements MethodInterceptor {
         return result;
     }
 
-    public static <T> T createProxy(T target, Class<T> clazz) {
+    public static <T> T createProxy(T target, Class<? extends Bean> clazz) {
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(clazz);
         enhancer.setCallback(new CglibAopProxy(target));
