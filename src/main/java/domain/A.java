@@ -11,7 +11,9 @@ public class A implements Bean {
     }
 
     @Log
-    public void test() {
+    public void testA() {
+        b.testB();
+
         System.out.println("테스트해봤슴");
     }
 }

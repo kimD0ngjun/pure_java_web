@@ -26,6 +26,6 @@ public class Test {
     @org.junit.jupiter.api.Test
     void test2() {
         A a = (A) context.getBean(A.class);
-        a.test();
+        a.testA();
     }
 }

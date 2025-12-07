@@ -2,8 +2,6 @@ package global.ioc;
 
 import global.aop.log.Log;
 import global.aop.proxy.ByteBuddyAopProxy;
-import global.aop.proxy.CglibAopProxy;
-import global.aop.proxy.DynamicAopProxy;
 import global.aop.transaction.Transactional;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -67,6 +65,9 @@ public class IocContainerConfig {
                 constructor.setAccessible(true);
                 Bean bean = (Bean) constructor.newInstance(params);
 
+                // 프록시 감싸기
+                bean = applyProxy(beanClass, bean);
+
                 // 싱글톤 캐싱
                 singletonBeans.put(beanClass, bean);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -92,11 +93,6 @@ public class IocContainerConfig {
 
         // 순환참조 DFS 검사
         if (!remainingBeans.isEmpty()) detectAndLogCycles(remainingBeans);
-
-        // 여기서 빈들에 대해 AopProxy 적용
-        for (Map.Entry<Class<?>, Bean> entry: singletonBeans.entrySet()) {
-
-        }
     }
 
     /**
@@ -185,38 +181,27 @@ public class IocContainerConfig {
         stack.remove(current);
     }
 
-    public void applyAopProxies() {
-        Map<Class<?>, Bean> proxiedMap = new HashMap<>();
-
-        for (Map.Entry<Class<?>, Bean> entry : singletonBeans.entrySet()) {
-            Class<?> beanClass = entry.getKey();
-            Bean originalBean = entry.getValue();
-
-            // 인터페이스가 없으면 JDK Dynamic Proxy 자체가 불가능
-            Class<?>[] interfaces = beanClass.getInterfaces();
-            if (interfaces.length == 0) {
-                proxiedMap.put(beanClass, originalBean);
-                continue;
-            }
-
-            // Dynamic Proxy 적용 여부 검사
-            // (메소드에 @Log, @Transactional 등 있는지 체크하자)
-            boolean needsProxy = Arrays.stream(beanClass.getMethods())
-                    .anyMatch(m -> m.isAnnotationPresent(Log.class)
-                            || m.isAnnotationPresent(Transactional.class));
-
-            if (!needsProxy) {
-                proxiedMap.put(beanClass, originalBean);
-                continue;
-            }
-
-            // 프록시 생성
-            Bean proxy = ByteBuddyAopProxy.createProxy(originalBean, originalBean.getClass());
-            proxiedMap.put(beanClass, proxy);
+    /**
+     * 빈에 프록시 감싸기 처리(인터페이스 기반 검증)
+     * @param beanClass
+     * @param originalBean
+     * @return
+     */
+    private Bean applyProxy(Class<? extends Bean> beanClass, Bean originalBean) {
+        // 1. 인터페이스가 없으면 프록시 불가: 원본 반환
+        Class<?>[] interfaces = beanClass.getInterfaces();
+        if (interfaces.length == 0) {
+            return originalBean;
         }
 
-        // 기존 bean 캐시를 프록시 버전으로 교체
-        singletonBeans = proxiedMap;
+        // 2. 메소드에 프록시 어노테이션 @Log, @Transactional 있는지 확인
+        boolean needsProxy = Arrays.stream(beanClass.getMethods())
+                .anyMatch(m -> m.isAnnotationPresent(Log.class) || m.isAnnotationPresent(Transactional.class));
+        if (!needsProxy) return originalBean;
+
+        // 3. 프록시 생성
+        Bean proxy = ByteBuddyAopProxy.createProxy(originalBean, originalBean.getClass());
+        return proxy;
     }
 
     /**
