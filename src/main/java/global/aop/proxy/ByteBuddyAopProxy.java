@@ -5,7 +5,8 @@ import global.aop.log.LogConfig;
 import global.aop.transaction.Transactional;
 import java.lang.reflect.Method;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.dynamic.DynamicType.Builder.MethodDefinition.ReceiverTypeDefinition;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy.Default;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -16,18 +17,28 @@ import org.slf4j.Logger;
 
 public class ByteBuddyAopProxy {
 
-    public static <T> T createProxy(T target, Class<T> beanClass) {
+    /**
+     * 어노테이션 기반 메소드 인터셉트 프록시
+     * @param target
+     * @param beanClass
+     * @return
+     * @param <T>
+     */
+    public static <T> T createProxy(T target, Class<? extends T> beanClass) {
         try {
-            return new ByteBuddy()
-                    .subclass(beanClass)
-                    .method(ElementMatchers.isAnnotatedWith(Log.class)
-                            .or(ElementMatchers.isAnnotatedWith(Transactional.class)))
-                    .intercept(MethodDelegation.to(new Interceptor(target)))
-                    .make()
-                    .load(beanClass.getClassLoader(), Default.WRAPPER)
-                    .getLoaded()
-                    .getConstructor()
-                    .newInstance();
+            ReceiverTypeDefinition<Object> intercept = new ByteBuddy()
+                    .subclass(Object.class)
+                    .implement(beanClass.getInterfaces()) // Bean 인터페이스
+                    .defineField("target", beanClass, Visibility.PRIVATE)
+                    .method(ElementMatchers.any()) // AOP 적용할 메소드
+                    .intercept(MethodDelegation.to(new Interceptor(target)));
+
+            Class<?> proxyClass = intercept.make()
+                    .load(beanClass.getClassLoader(), Default.INJECTION)
+                    .getLoaded();
+
+            return (T) proxyClass.getConstructor().newInstance();
+
         } catch (Exception e) {
             throw new RuntimeException("프록시 생성 실패: " + beanClass.getName(), e);
         }

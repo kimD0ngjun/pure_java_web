@@ -93,9 +93,7 @@ public class IocContainerConfig {
 
         // 여기서 빈들에 대해 AopProxy 적용
         for (Map.Entry<Class<?>, Bean> entry: singletonBeans.entrySet()) {
-//            singletonBeans.put(entry.getKey(), DynamicAopProxy.createProxy(entry.getValue(), Bean.class));
-//            singletonBeans.put(entry.getKey(), CglibAopProxy.createProxy(entry.getValue(), Bean.class));
-            singletonBeans.put(entry.getKey(), ByteBuddyAopProxy.createProxy(entry.getValue(), Bean.class));
+            singletonBeans.put(entry.getKey(), ByteBuddyAopProxy.createProxy(entry.getValue(), entry.getValue().getClass()));
         }
     }
 
