@@ -2,14 +2,13 @@ package global.context;
 
 import global.ioc.IocContainer;
 import global.ioc.IocContainerConfig;
-import global.log.Log;
-import global.log.LogConfig;
+import global.aop.log.Log;
 import global.reader.YmlConfigReader;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Log
 public class ApplicationContext {
-    private Logger log;
+    private Logger log = LoggerFactory.getLogger(ApplicationContext.class);
     private final IocContainer ioc;
     private final YmlConfigReader reader;
 
@@ -31,7 +30,6 @@ public class ApplicationContext {
     }
 
     public void runContext() {
-        LogConfig.initializeLogger(this);
         log.info("""
                 \n
                 =====================================
@@ -72,5 +70,9 @@ public class ApplicationContext {
             ioc.shutdown();
             log.info("Shutdown complete. GOOD BYE!");
         }));
+    }
+
+    public <T> T getBean(Class<T> type) {
+        return ioc.getBean(type);
     }
 }
